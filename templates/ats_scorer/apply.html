@@ -1,0 +1,126 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Apply for {{ job.title }}{% endblock %}
+
+{% block content %}
+<div class="row mt-5">
+    <div class="col-md-6 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">Apply for {{ job.title }}</h4>
+            </div>
+            <div class="card-body p-4">
+                <p><strong>Job Location:</strong> {{ job.city }}</p>
+                <p><strong>Category:</strong> {{ job.category }}</p>
+                <hr>
+                
+                <h5 class="mb-3">Resume Upload</h5>
+                
+                <div id="successAlert" class="alert alert-success mt-3 d-none text-center shadow-sm rounded-4 border-0">
+                    <h5 class="alert-heading fw-bold mb-3"><i class="bi bi-check-circle-fill text-success fs-1"></i><br>Success!</h5>
+                    <p class="mb-1">Your application has been received and processed.</p>
+                    <p class="mb-3">ATS Match Score: <span id="scoreBadge" class="badge bg-success fs-6 shadow-sm"></span>.</p>
+                    <p class="text-muted small"><i class="bi bi-envelope-check"></i> We've sent a detailed update to your email inbox!</p>
+                    <hr class="opacity-25">
+                    <a href="{% url 'student_dashboard' %}" class="btn btn-primary shadow-sm"><i class="bi bi-person-workspace"></i> Go to Dashboard</a>
+                    <a href="{% url 'home' %}" class="btn btn-outline-secondary shadow-sm ms-2">Browse Jobs</a>
+                </div>
+
+                <form id="applyForm" method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label for="resume" class="form-label fw-bold"><i class="bi bi-file-earmark-pdf text-danger"></i> Upload your Resume (PDF format)</label>
+                        <input class="form-control form-control-lg bg-light" type="file" id="resume" name="resume" accept=".pdf" required>
+                        <div class="form-text mt-2"><i class="bi bi-robot"></i> Our ATS engine will scan your resume against the required skills to generate your match score.</div>
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="btn btn-success btn-lg w-100 shadow fw-bold">
+                        <span id="btnText"><i class="bi bi-send-fill"></i> Submit Application</span>
+                        <span id="btnLoader" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                        <span id="btnLoaderText" class="d-none ms-2">Processing Resume...</span>
+                    </button>
+                    <a id="cancelBtn" href="{% url 'job_detail' job.id %}" class="btn btn-link w-100 mt-2 text-muted fw-bold text-decoration-none">Cancel</a>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const applyForm = document.getElementById('applyForm');
+        
+        applyForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const btnText = document.getElementById('btnText');
+            const btnLoader = document.getElementById('btnLoader');
+            const btnLoaderText = document.getElementById('btnLoaderText');
+            const successAlert = document.getElementById('successAlert');
+            const scoreBadge = document.getElementById('scoreBadge');
+            const cancelBtn = document.getElementById('cancelBtn');
+            
+            // Set Loading UI state
+            submitBtn.disabled = true;
+            submitBtn.classList.remove('btn-success');
+            submitBtn.classList.add('btn-secondary');
+            btnText.classList.add('d-none');
+            btnLoader.classList.remove('d-none');
+            btnLoaderText.classList.remove('d-none');
+            cancelBtn.classList.add('d-none');
+            
+            const formData = new FormData(applyForm);
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'Accept': 'application/json'
+                }
+            })
+            .then(response => {
+                if(!response.ok) throw new Error("Server Response Not OK");
+                return response.json();
+            })
+            .then(data => {
+                if(data.status === 'success') {
+                    // Hide form and show success alert
+                    applyForm.classList.add('d-none');
+                    successAlert.classList.remove('d-none');
+                    successAlert.classList.add('fade-in-up');
+                    
+                    // Format score badge
+                    scoreBadge.textContent = data.score + '% Match';
+                    if(data.score < 40) {
+                        scoreBadge.className = 'badge bg-danger fs-6 shadow-sm';
+                    } else if(data.score < 70) {
+                        scoreBadge.className = 'badge bg-warning text-dark fs-6 shadow-sm';
+                    }
+                } else {
+                    alert('Submission failed: ' + (data.message || 'Unknown error'));
+                    resetBtnState();
+                }
+            })
+            .catch(error => {
+                console.error('Error submitting form:', error);
+                alert('An error occurred submitting your resume. Please try again.');
+                resetBtnState();
+            });
+            
+            function resetBtnState() {
+                submitBtn.disabled = false;
+                submitBtn.classList.add('btn-success');
+                submitBtn.classList.remove('btn-secondary');
+                btnText.classList.remove('d-none');
+                btnLoader.classList.add('d-none');
+                btnLoaderText.classList.add('d-none');
+                cancelBtn.classList.remove('d-none');
+            }
+        });
+    });
+</script>
+{% endblock %}

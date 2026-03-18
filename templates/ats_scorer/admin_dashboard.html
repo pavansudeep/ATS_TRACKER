@@ -1,0 +1,79 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="mt-4 fade-in-up">
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h2 class="fw-bold"><i class="bi bi-speedometer2 text-primary"></i> Admin Dashboard</h2>
+        <a href="{% url 'admin:index' %}" class="btn btn-outline-primary shadow-sm" target="_blank"><i class="bi bi-gear-fill"></i> Django Admin</a>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-6">
+            <div class="card bg-primary text-white shadow hover-card rounded-4 border-0">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-white-50">Total Active Jobs</h5>
+                        <h2 class="display-4 fw-bold mb-0">{{ jobs.count }}</h2>
+                    </div>
+                    <i class="bi bi-briefcase-fill display-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card bg-success text-white shadow hover-card rounded-4 border-0">
+                <div class="card-body p-4 d-flex justify-content-between align-items-center">
+                    <div>
+                        <h5 class="card-title text-white-50">Total Applications Received</h5>
+                        <h2 class="display-4 fw-bold mb-0">{{ applications.count }}</h2>
+                    </div>
+                    <i class="bi bi-file-earmark-person-fill display-1 opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Applications -->
+    <h4 class="mb-3 fw-bold"><i class="bi bi-clock-history text-secondary"></i> Recent Candidate Applications</h4>
+    {% if applications %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped shadow-sm bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="bi bi-person"></i> Candidate</th>
+                        <th><i class="bi bi-briefcase"></i> Applied For</th>
+                        <th><i class="bi bi-percent"></i> ATS Match Score</th>
+                        <th><i class="bi bi-file-pdf"></i> Resume</th>
+                        <th><i class="bi bi-calendar"></i> Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td>{{ app.student.first_name }} {{ app.student.last_name }} ({{ app.student.username }})</td>
+                        <td>{{ app.job.title }} <small class="text-muted">({{ app.job.city }})</small></td>
+                        <td>
+                            <span class="badge {% if app.ats_score > 70 %}bg-success{% elif app.ats_score > 40 %}bg-warning text-dark{% else %}bg-danger{% endif %} fs-6">
+                                {{ app.ats_score }}%
+                            </span>
+                        </td>
+                        <td>
+                            {% if app.resume %}
+                                <a href="{{ app.resume.url }}" target="_blank" class="btn btn-sm btn-outline-secondary">View PDF</a>
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                        <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-secondary">No applications received yet.</div>
+    {% endif %}
+</div>
+{% endblock %}

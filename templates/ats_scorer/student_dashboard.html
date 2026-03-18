@@ -1,0 +1,60 @@
+{% extends 'base/base.html' %}
+
+{% block title %}Student Dashboard{% endblock %}
+
+{% block content %}
+<div class="mt-4 fade-in-up">
+    <h2 class="mb-4 fw-bold"><i class="bi bi-person-workspace text-primary"></i> My Applications</h2>
+    
+    {% if applications %}
+        <div class="table-responsive">
+            <table class="table table-hover shadow-sm bg-white">
+                <thead class="table-dark">
+                    <tr>
+                        <th><i class="bi bi-briefcase"></i> Job Title</th>
+                        <th><i class="bi bi-geo-alt"></i> Company/City</th>
+                        <th><i class="bi bi-calendar-check"></i> Date Applied</th>
+                        <th><i class="bi bi-percent"></i> ATS Score</th>
+                        <th><i class="bi bi-info-circle"></i> Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for app in applications %}
+                    <tr>
+                        <td class="fw-bold"><a href="{% url 'job_detail' app.job.id %}" class="text-decoration-none">{{ app.job.title }}</a></td>
+                        <td>{{ app.job.city }}</td>
+                        <td>{{ app.applied_at|date:"M d, Y" }}</td>
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <span class="me-2">{{ app.ats_score }}%</span>
+                                <div class="progress w-100" style="height: 10px;">
+                                    <div class="progress-bar {% if app.ats_score > 70 %}bg-success{% elif app.ats_score > 40 %}bg-warning{% else %}bg-danger{% endif %}" 
+                                         role="progressbar" 
+                                         style="width: {{ app.ats_score }}%" 
+                                         aria-valuenow="{{ app.ats_score }}" 
+                                         aria-valuemin="0" 
+                                         aria-valuemax="100"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            {% if app.ats_score >= 70 %}
+                                <span class="badge bg-success">Shortlisted</span>
+                            {% elif app.ats_score >= 40 %}
+                                <span class="badge bg-warning text-dark">Under Review</span>
+                            {% else %}
+                                <span class="badge bg-danger">Rejected</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="alert alert-info">
+            You haven't applied to any jobs yet. <a href="{% url 'home' %}" class="alert-link">Browse Jobs</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
